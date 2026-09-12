@@ -1,0 +1,1462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EV92J35A Rev 3 - Interactive PCB GUI (Demo Mode)</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #1a1a2e;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow-x: hidden;
+            overflow-y: auto;
+            transition: background 0.4s ease;
+        }
+
+        .board-container {
+            position: relative;
+            display: inline-block;
+            max-width: 90vw;
+            max-height: 85vh;
+            margin-top: 13vh;
+            transition: opacity 0.4s ease;
+        }
+
+        .board-container img {
+            display: block;
+            max-width: 90vw;
+            max-height: 85vh;
+            width: auto;
+            height: auto;
+            border-radius: 4px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        .hover-region {
+            position: absolute;
+            border: 2px solid transparent;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .hover-region:hover {
+            border-color: rgba(0, 255, 65, 0.7);
+            background: rgba(0, 255, 65, 0.08);
+            box-shadow: 0 0 15px rgba(0, 255, 65, 0.3);
+        }
+
+        .hover-region .label {
+            position: absolute;
+            bottom: -2px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.85);
+            color: #00ff41;
+            padding: 3px 10px;
+            border-radius: 3px;
+            font-size: 11px;
+            font-weight: bold;
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+
+        .hover-region:hover .label {
+            opacity: 1;
+        }
+
+        .schematic-popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.9);
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+            padding: 20px;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s ease;
+            max-width: 80vw;
+            max-height: 80vh;
+            overflow: auto;
+        }
+
+        .schematic-popup.active {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .schematic-popup .popup-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .schematic-popup .popup-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+
+        .schematic-popup .popup-close {
+            width: 30px;
+            height: 30px;
+            border: none;
+            background: #f0f0f0;
+            border-radius: 50%;
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+
+        .schematic-popup .popup-close:hover {
+            background: #e0e0e0;
+        }
+
+        .schematic-popup .popup-open-tab {
+            border: none;
+            background: #1a1a2e;
+            color: #fff;
+            padding: 6px 14px;
+            border-radius: 5px;
+            font-size: 13px;
+            cursor: pointer;
+            margin-right: 10px;
+            transition: background 0.2s;
+        }
+
+        .schematic-popup .popup-open-tab:hover {
+            background: #2d2d4e;
+        }
+
+        .schematic-popup .popup-body {
+            display: flex;
+            align-items: flex-start;
+            gap: 20px;
+        }
+
+        .schematic-popup .popup-body img {
+            max-width: 55%;
+            max-height: 60vh;
+            border-radius: 6px;
+            border: 1px solid #e0e0e0;
+            flex-shrink: 0;
+        }
+
+        .schematic-popup .popup-body img:only-child {
+            max-width: 100%;
+        }
+
+        .schematic-popup .popup-description {
+            flex: 1;
+            text-align: left;
+            font-size: 14px;
+            color: #333;
+            line-height: 1.6;
+            max-height: 60vh;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+
+        .schematic-popup .popup-description h4 {
+            margin-bottom: 8px;
+            color: #1a1a2e;
+            font-size: 14px;
+        }
+
+        .schematic-popup .popup-description ul {
+            margin: 8px 0;
+            padding-left: 18px;
+        }
+
+        .schematic-popup .popup-description li {
+            margin-bottom: 6px;
+        }
+
+        .schematic-popup .placeholder {
+            padding: 60px 40px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 2px dashed #ccc;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .schematic-popup .placeholder p {
+            margin-top: 10px;
+            font-size: 12px;
+            color: #999;
+        }
+
+        .overlay-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .overlay-backdrop.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        /* LCD Display */
+        .lcd-display {
+            position: absolute;
+            background: #d4d4d4;
+            border: 2px solid #001f3f;
+            border-radius: 4px;
+            padding: 6px 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .lcd-display .lcd-text {
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            font-weight: bold;
+            color: #001f3f;
+            letter-spacing: 1px;
+            white-space: nowrap;
+            line-height: 1.8;
+        }
+
+        /* Title bar */
+        .title-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(26, 26, 46, 0.95);
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 100;
+            border-bottom: 1px solid #333;
+        }
+
+        .title-bar h1 {
+            color: #fff;
+            font-size: 19px;
+            font-weight: 600;
+        }
+
+        .title-bar .subtitle {
+            color: #888;
+            font-size: 12px;
+        }
+
+        /* Sidebar toggle button */
+        .sidebar-toggle {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            width: 36px;
+            height: 36px;
+            background: #1a1a2e;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            transition: background 0.2s;
+        }
+
+        .sidebar-toggle:hover {
+            background: #2d2d4e;
+        }
+
+        .sidebar-toggle span {
+            display: block;
+            width: 20px;
+            height: 2px;
+            background: #fff;
+            border-radius: 1px;
+        }
+
+        .sidebar-toggle .tooltip {
+            position: absolute;
+            right: 42px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0, 0, 0, 0.85);
+            color: #fff;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+        }
+
+        .sidebar-toggle:hover .tooltip {
+            opacity: 1;
+        }
+
+        /* Right sidebar */
+        .sidebar {
+            position: fixed;
+            top: 66px;
+            right: -260px;
+            width: 240px;
+            height: calc(100vh - 66px);
+            background: #ffffff;
+            border-left: 1px solid #ddd;
+            box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
+            z-index: 101;
+            display: flex;
+            flex-direction: column;
+            padding: 20px 16px;
+            overflow-y: auto;
+            transition: right 0.3s ease;
+        }
+
+        .sidebar.open {
+            right: 0;
+        }
+
+        .sidebar h3 {
+            margin-bottom: 10px;
+            font-size: 14px;
+            color: #1a1a2e;
+            border-bottom: 1px solid #e0e0e0;
+            padding-bottom: 8px;
+        }
+
+        .sidebar .contact {
+            margin-bottom: 8px;
+        }
+
+        .sidebar .contact-name {
+            font-weight: 600;
+            color: #1a1a2e;
+            font-size: 13px;
+        }
+
+        .sidebar .contact-email {
+            color: #0066cc;
+            font-size: 12px;
+            text-decoration: none;
+        }
+
+        .sidebar .contact-email:hover {
+            text-decoration: underline;
+        }
+
+        .sidebar .sidebar-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        /* Left-side button */
+        .left-buttons {
+            position: fixed;
+            left: calc(20px + 5vw);
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            z-index: 100;
+        }
+
+        .contacts-btn {
+            background: #8b0000;
+            color: #fff;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 7px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            white-space: nowrap;
+            width: 100%;
+            text-align: center;
+        }
+
+        .contacts-btn:hover {
+            background: #a50000;
+        }
+
+        .instructions {
+            position: fixed;
+            top: calc(50px + 2.5vh);
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.7);
+            color: #aaa;
+            padding: 7px 14px;
+            border-radius: 20px;
+            font-size: 11px;
+            z-index: 100;
+            transition: opacity 0.4s ease;
+        }
+
+        /* Wires on right of board */
+        .wires-container {
+            position: fixed;
+            right: calc(60px + 3.2%);
+            top: 55.2%;
+            transform: translateY(-50%);
+            display: flex;
+            align-items: center;
+            gap: 0;
+            z-index: 100;
+            transition: opacity 0.4s ease;
+        }
+
+        .wires {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        .wire {
+            width: 80px;
+            height: 4px;
+            border-radius: 2px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .wire.red {
+            background: #cc0000;
+        }
+
+        .wire.black {
+            background: #222;
+        }
+
+        /* Receiver wires (left side) */
+        .rx-wires-container {
+            position: fixed;
+            left: calc(220px + 20px + 4.1%);
+            top: 24%;
+            transform: translateY(-50%);
+            display: flex;
+            align-items: center;
+            gap: 0;
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.4s ease;
+            flex-direction: row-reverse;
+        }
+
+        .rx-wires-container.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        /* ========== DEMO MODE STYLES ========== */
+        .demo-panel {
+            position: fixed;
+            top: 66px;
+            left: 0;
+            bottom: 0;
+            width: 220px;
+            background: linear-gradient(180deg, rgba(26, 26, 46, 0.97) 0%, rgba(15, 15, 30, 0.99) 100%);
+            border-right: 2px solid #8b0000;
+            padding: 18px 12px;
+            z-index: 200;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 14px;
+            backdrop-filter: blur(8px);
+            overflow-y: auto;
+            transition: opacity 0.4s ease;
+        }
+
+        .demo-flow {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0;
+            width: 100%;
+        }
+
+        .demo-block {
+            background: linear-gradient(135deg, #2a2a4a 0%, #1a1a2e 100%);
+            border: 1.5px solid #444;
+            border-radius: 10px;
+            padding: 10px 14px;
+            text-align: center;
+            width: 100%;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        .demo-block.active-signal {
+            border-color: #00ff41;
+            box-shadow: 0 0 12px rgba(0, 255, 65, 0.2);
+        }
+
+        .demo-block .block-title {
+            color: #fff;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 4px;
+        }
+
+        .demo-block .block-value {
+            color: #fff;
+            font-size: 18px;
+            font-weight: 700;
+            font-family: 'Courier New', monospace;
+        }
+
+        .demo-block .block-unit {
+            color: #fff;
+            font-size: 11px;
+            margin-top: 2px;
+        }
+
+        .demo-connector {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 2px;
+            height: 24px;
+            position: relative;
+            margin: 2px 0;
+        }
+
+        .demo-connector .connector-line {
+            width: 2px;
+            height: 100%;
+            background: #444;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .demo-connector .connector-line::after {
+            content: '';
+            position: absolute;
+            left: -1px;
+            top: -20px;
+            width: 4px;
+            height: 20px;
+            background: linear-gradient(180deg, transparent, #00ff41, transparent);
+            animation: signal-flow 1.2s linear infinite;
+        }
+
+        @keyframes signal-flow {
+            0% { top: -20px; }
+            100% { top: 100%; }
+        }
+
+        .demo-connector .connector-arrow {
+            width: 0;
+            height: 0;
+            border-top: 6px solid #00ff41;
+            border-left: 4px solid transparent;
+            border-right: 4px solid transparent;
+            position: absolute;
+            bottom: -2px;
+        }
+
+        .demo-slider-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            width: 100%;
+        }
+
+        .demo-slider-container label {
+            color: #ccc;
+            font-size: 12px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .demo-slider {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: linear-gradient(90deg, #333 0%, #8b0000 100%);
+            outline: none;
+            cursor: pointer;
+        }
+
+        .demo-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #fff;
+            border: 3px solid #8b0000;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        }
+
+        .demo-slider::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #fff;
+            border: 3px solid #8b0000;
+            cursor: pointer;
+        }
+
+        .demo-slider-value {
+            color: #fff;
+            font-family: 'Courier New', monospace;
+            font-size: 15px;
+            font-weight: 700;
+            min-width: 70px;
+            text-align: right;
+        }
+
+        /* ========== VIEW TOGGLE ========== */
+        .view-nav-btn {
+            background: rgba(26, 26, 46, 0.9);
+            color: #fff;
+            border: 2px solid #8b0000;
+            padding: 48px 20px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            justify-content: center;
+            margin-top: auto;
+        }
+
+        .view-nav-btn:hover {
+            background: #8b0000;
+        }
+
+        .view-nav-btn.rx-style {
+            border-color: #0a5e2a;
+        }
+
+        .view-nav-btn.rx-style:hover {
+            background: #0a5e2a;
+        }
+
+        /* ========== RECEIVER VIEW ========== */
+        .receiver-view {
+            position: fixed;
+            top: calc(66px + 5vh);
+            left: 10%;
+            right: 10%;
+            bottom: 0;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.4s ease;
+            display: flex;
+        }
+
+        .receiver-view.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .receiver-signal-chain {
+            position: fixed;
+            top: 66px;
+            left: 0;
+            bottom: 0;
+            width: 220px;
+            background: linear-gradient(180deg, rgba(26, 26, 46, 0.97) 0%, rgba(15, 15, 30, 0.99) 100%);
+            border-right: 2px solid #0a5e2a;
+            padding: 18px 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0;
+            z-index: 200;
+            backdrop-filter: blur(8px);
+            overflow-y: auto;
+            justify-content: flex-start;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.4s ease;
+        }
+
+        .receiver-signal-chain.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .receiver-signal-chain .rx-block {
+            background: linear-gradient(135deg, #2a2a4a 0%, #1a1a2e 100%);
+            border: 1.5px solid #444;
+            border-radius: 10px;
+            padding: 18px 14px;
+            text-align: center;
+            width: 100%;
+            position: relative;
+        }
+
+        .receiver-signal-chain .rx-block .rx-title {
+            color: #fff;
+            font-size: 14px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .receiver-signal-chain .rx-block .rx-subtitle {
+            color: #888;
+            font-size: 12px;
+            margin-top: 4px;
+        }
+
+        .receiver-signal-chain .rx-connector {
+            width: 2px;
+            height: 20px;
+            background: #444;
+            position: relative;
+        }
+
+        .receiver-signal-chain .rx-connector::after {
+            content: '';
+            position: absolute;
+            left: -1px;
+            top: -10px;
+            width: 4px;
+            height: 10px;
+            background: linear-gradient(180deg, transparent, #00ff41, transparent);
+            animation: signal-flow 1.2s linear infinite;
+        }
+
+        .receiver-images {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            transform: rotate(-90deg) scale(0.85);
+        }
+
+        .receiver-images .base-img {
+            max-width: 100%;
+            max-height: 100vh;
+            border-radius: 8px;
+            border: 2px solid #444;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+            transform: rotate(-90deg);
+        }
+
+        .receiver-images .overlay-img {
+            position: absolute;
+            border-radius: 6px;
+        }
+
+        .receiver-images .rx-region {
+            z-index: 5;
+        }
+
+        #rx-region-curiosity .label {
+            transform: translateY(-50%) rotate(90deg);
+            right: -40px;
+            left: auto;
+            top: 50%;
+            bottom: auto;
+            z-index: -1;
+        }
+
+        #rx-region-pac1711 .label {
+            transform: rotate(90deg);
+            left: -60px;
+            right: auto;
+            top: 50%;
+            bottom: auto;
+        }
+
+        .receiver-images .rx-region:hover {
+            border-color: rgba(255, 220, 0, 0.7);
+            background: rgba(255, 220, 0, 0.08);
+            box-shadow: 0 0 15px rgba(255, 220, 0, 0.3);
+        }
+
+        .receiver-images .overlay-img.top-left {
+            top: 62.9%;
+            left: 19.5%;
+            max-width: 45%;
+        }
+
+        .receiver-images .overlay-img.bottom-right {
+            bottom: 50%;
+            right: 21.5%;
+            max-width: 14%;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="title-bar">
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <img src="Microchip-Symbol.png" alt="Microchip Technology" style="height: 36px; flex-shrink: 0;">
+            <div>
+                <h1>EV92J35A - Differential Signal Conditioning and 4-20 mA Loop Controller Board</h1>
+                <span class="subtitle">Interactive PCB Explorer</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="board-container" id="boardContainer">
+        <img src="assets/MASTERs26_PCB_3D.png" alt="EV92J35A PCB Board" id="boardImage">
+
+        <!-- Pressure Header (J_header) -->
+        <div class="hover-region" id="region-pressure"
+             style="left: 5%; top: 4%; width: 13%; height: 9%;"
+             data-block="pressure_header"
+             data-title="Pressure Header">
+            <span class="label">Pressure Header</span>
+        </div>
+
+        <!-- Analog Front End -->
+        <div class="hover-region" id="region-afe"
+             style="left: 2%; top: 19%; width: 17%; height: 50%;"
+             data-block="analog_front_end"
+             data-title="Analog Front End">
+            <span class="label">Analog Front End</span>
+        </div>
+
+        <!-- Microcontroller -->
+        <div class="hover-region" id="region-mcu"
+             style="left: 20%; top: 19%; width: 22%; height: 50%;"
+             data-block="microcontroller"
+             data-title="Microcontroller">
+            <span class="label">Microcontroller</span>
+        </div>
+
+        <!-- 4-20mA Loop Driver -->
+        <div class="hover-region" id="region-loop"
+             style="left: 76%; top: 32%; width: 22%; height: 43%;"
+             data-block="loop_driver"
+             data-title="4-20mA Loop Driver">
+            <span class="label">4-20mA Loop Driver</span>
+        </div>
+
+        <!-- Power -->
+        <div class="hover-region" id="region-power"
+             style="left: 79%; top: 1%; width: 20%; height: 30%;"
+             data-block="power"
+             data-title="Power">
+            <span class="label">Power</span>
+        </div>
+
+        <!-- Joystick -->
+        <div class="hover-region" id="region-joystick"
+             style="left: 84%; top: 84%; width: 9%; height: 12%;"
+             data-block="joystick"
+             data-title="Joystick">
+            <span class="label">Joystick</span>
+        </div>
+
+        <!-- LCD Display -->
+        <div class="lcd-display" id="lcdDisplay"
+             style="left: 48%; top: 30%; width: 22%; height: 30%;">
+            <span class="lcd-text" style="font-size: 11px; position: absolute; top: 4px; text-align: center; line-height: 1.4;"><span style="font-size: 13px; font-weight: 900; color: #8b0000;">MICROCHIP</span><br>Pressure 4-20mA Loop Current</span>
+            <span class="lcd-text" id="lcdText">Pressure = 0.00 psi<br>Loop Current = 4.00 mA</span>
+        </div>
+    </div>
+
+    <!-- Backdrop for popup -->
+    <div class="overlay-backdrop" id="backdrop"></div>
+
+    <!-- Schematic Popup -->
+    <div class="schematic-popup" id="schematicPopup">
+        <div class="popup-header">
+            <span class="popup-title" id="popupTitle">Block Name</span>
+            <button class="popup-close" id="popupClose">&times;</button>
+        </div>
+        <div class="popup-body" id="popupBody"></div>
+        <div style="text-align: center; margin-top: 15px;">
+            <button class="popup-open-tab" id="popupOpenTab">Open in new tab</button>
+        </div>
+    </div>
+
+<!-- Sidebar toggle icon -->
+    <button class="sidebar-toggle" id="sidebarToggle">
+        <span></span>
+        <span></span>
+        <span></span>
+        <div class="tooltip">Project Details</div>
+    </button>
+
+    <!-- Right sidebar -->
+    <div class="sidebar" id="sidebar">
+        <h3 style="font-size: 16px; margin-bottom: 16px;">Project Details</h3>
+        <h3>Contacts</h3>
+        <div class="contact">
+            <div class="contact-name">Joshua Smith</div>
+            <a class="contact-email" href="mailto:joshua.smith@microchip.com">joshua.smith@microchip.com</a>
+        </div>
+        <div class="contact">
+            <div class="contact-name">Sultan Al Niyadi</div>
+            <a class="contact-email" href="mailto:sultan.alniyadi@microchip.com">sultan.alniyadi@microchip.com</a>
+        </div>
+
+        <div class="sidebar-buttons">
+<button class="contacts-btn" id="whatIs420Btn" style="background: #111; color: #fff;">
+                What is 4-20mA?
+            </button>
+            <button class="contacts-btn" id="popQuizBtn" style="background: #0055a5;">
+                4-20mA Pop Quiz
+            </button>
+            <button class="contacts-btn" id="refDesignBtn"
+                    onclick="window.open('https://www.microchip.com/en-us/tools-resources/reference-designs/dac-based-4-20-ma-current-loop-reference-design', '_blank')">
+                4-20mA Reference Design
+            </button>
+            <button class="contacts-btn" id="evRefDesignBtn" style="white-space: normal;">
+                EV92J35A<br>Reference Design
+            </button>
+            <button class="contacts-btn" id="userGuideBtn">
+                User Guide
+            </button>
+            <button class="contacts-btn" id="applicationsBtn">
+                4-20mA Applications
+            </button>
+        </div>
+    </div>
+
+    <div class="instructions" id="txInstructions">
+        Click on a highlighted block to view its schematic
+    </div>
+
+    <!-- Wires + To Receiver button -->
+    <div class="wires-container" id="wiresContainer">
+        <div class="wires">
+            <div class="wire black" style="transform: translateY(0.5vh);"></div>
+            <div class="wire red"></div>
+        </div>
+        <button class="view-nav-btn" id="toRxBtn" onclick="switchToRx()" style="border-color: #0a5e2a; background: #0a5e2a; padding: 20px 10px; width: 160px; height: 750px; flex-direction: column; justify-content: center; align-items: flex-end; position: relative;">
+            <span style="font-size: 24px; position: absolute; top: 50%; right: 10px; transform: translateY(-50%);">&#9654;</span>
+            <span style="transform: rotate(90deg); font-size: 34px; white-space: nowrap; align-self: center;">To Receiver</span>
+        </button>
+    </div>
+
+    <!-- Receiver Signal Chain (outside receiver-view to avoid transform breaking fixed positioning) -->
+    <div class="receiver-signal-chain" id="rxSignalChain">
+        <div class="rx-block" style="background: url('assets/MASTERs26_PCB_3D.png') center/cover no-repeat; position: relative;">
+            <div style="position: absolute; inset: 0; background: rgba(26,26,46,0.65); border-radius: 9px;"></div>
+            <div style="position: relative;">
+                <div class="rx-title">EV92J35A</div>
+                <div class="rx-subtitle">Transmitter Board</div>
+            </div>
+        </div>
+        <div class="rx-connector"></div>
+        <div class="rx-block" style="background: url('assets/PAC1711.png') center/cover no-repeat; position: relative;">
+            <div style="position: absolute; inset: 0; background: rgba(26,26,46,0.65); border-radius: 9px;"></div>
+            <div style="position: relative;">
+                <div class="rx-title">PAC1711</div>
+                <div class="rx-subtitle">Current Sense</div>
+            </div>
+        </div>
+        <div class="rx-connector"></div>
+        <div class="rx-block" style="background: url('assets/PIC18F57Q43_Curiosity_Nano.png') center/cover no-repeat; position: relative;">
+            <div style="position: absolute; inset: 0; background: rgba(26,26,46,0.65); border-radius: 9px;"></div>
+            <div style="position: relative;">
+                <div class="rx-title">Curiosity Nano</div>
+                <div class="rx-subtitle">PIC18F57Q43</div>
+            </div>
+        </div>
+        <div class="rx-connector"></div>
+        <div class="rx-block" style="background: url('assets/laptop.jpg') center/cover no-repeat; position: relative;">
+            <div style="position: absolute; inset: 0; background: rgba(26,26,46,0.65); border-radius: 9px;"></div>
+            <div style="position: relative;">
+                <div class="rx-title">Laptop</div>
+                <div class="rx-subtitle">UART over USB</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Receiver View -->
+    <div class="instructions rx-instructions" id="rxInstructions" style="opacity: 0; pointer-events: none;">
+        Click on a highlighted block to view its schematic
+    </div>
+    <div class="receiver-view" id="receiverView">
+        <div class="receiver-images">
+            <img class="base-img" src="assets/RecieverBase.jpg" alt="Receiver Base Board">
+            <img class="overlay-img top-left" src="assets/PIC18F57Q43_Curiosity_Nano.png" alt="Curiosity Nano Board">
+            <img class="overlay-img bottom-right" src="assets/PAC1711.png" alt="PAC1711 Board">
+
+            <!-- Clickable schematic regions -->
+            <div class="hover-region rx-region" id="rx-region-curiosity"
+                 style="top: 63.3%; left: 19.8%; width: 45%; height: 22%;"
+                 data-block="curiosity_nano"
+                 data-title="Curiosity Nano">
+                <span class="label">Curiosity Nano</span>
+            </div>
+            <div class="hover-region rx-region" id="rx-region-pac1711"
+                 style="bottom: 50%; right: 21.5%; width: 14%; height: 56%;"
+                 data-block="pac1711"
+                 data-title="PAC1711 Power Monitor">
+                <span class="label">PAC1711 Power Monitor</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Receiver Wires + To Transmitter button -->
+    <div class="rx-wires-container" id="rxWiresContainer">
+        <div class="wires">
+            <div class="wire red"></div>
+            <div class="wire" style="background: #e6c200;"></div>
+        </div>
+        <button class="view-nav-btn" id="toTxBtn" onclick="switchToTx()" style="border-color: #8b0000; background: #8b0000; padding: 20px 10px; width: 160px; height: 750px; margin-top: calc(50vh - 2vh + 15vh); flex-direction: column; justify-content: center; align-items: flex-start; position: relative;">
+            <span style="font-size: 24px; position: absolute; top: 50%; left: 10px; transform: translateY(-50%);">&#9664;</span>
+            <span style="transform: rotate(-90deg); font-size: 34px; white-space: nowrap; align-self: center;">To Transmitter</span>
+        </button>
+    </div>
+
+    <!-- Demo Mode Panel -->
+    <div class="demo-panel" id="demoPanel">
+        <div class="demo-flow">
+            <div class="demo-block active-signal" id="demoTank" style="background: url('assets/Pressure_tank.jpg') center/cover no-repeat; position: relative;">
+                <div style="position: absolute; inset: 0; background: rgba(26,26,46,0.6); border-radius: 9px;"></div>
+                <div style="position: relative;">
+                    <div class="block-title">Pressure Tank</div>
+                    <div class="block-value" id="demoTankVal">0.00</div>
+                    <div class="block-unit">psi</div>
+                </div>
+            </div>
+            <div class="demo-connector"><div class="connector-line"></div><div class="connector-arrow"></div></div>
+            <div class="demo-block" id="demoSensor" style="background: url('assets/Pressure_sensor.png') center/cover no-repeat; position: relative;">
+                <div style="position: absolute; inset: 0; background: rgba(26,26,46,0.6); border-radius: 9px;"></div>
+                <div style="position: relative;">
+                    <div class="block-title">Pressure Sensor</div>
+                    <div class="block-value" id="demoSensorVal">-0.20</div>
+                    <div class="block-unit">mV (differential)</div>
+                </div>
+            </div>
+            <div class="demo-connector"><div class="connector-line"></div><div class="connector-arrow"></div></div>
+            <div class="demo-block" id="demoBoard" style="background: url('assets/MASTERs26_PCB_3D.png') center/cover no-repeat; position: relative;">
+                <div style="position: absolute; inset: 0; background: rgba(26,26,46,0.6); border-radius: 9px;"></div>
+                <div style="position: relative;">
+                    <div class="block-title">EV92J35A Board</div>
+                    <div class="block-value" id="demoBoardVal">0.00</div>
+                    <div class="block-unit">V (conditioned)</div>
+                </div>
+            </div>
+            <div class="demo-connector"><div class="connector-line"></div><div class="connector-arrow"></div></div>
+            <div class="demo-block" id="demoOutput" style="background: url('assets/Loop_driver.avif') center/cover no-repeat; position: relative;">
+                <div style="position: absolute; inset: 0; background: rgba(26,26,46,0.6); border-radius: 9px;"></div>
+                <div style="position: relative;">
+                    <div class="block-title">Loop Output</div>
+                    <div class="block-value" id="demoOutputVal">4.00</div>
+                    <div class="block-unit">mA</div>
+                </div>
+            </div>
+        </div>
+        <div class="demo-slider-container">
+            <label>Tank Pressure:</label>
+            <input type="range" class="demo-slider" id="demoSlider" min="0" max="50" step="0.1" value="0">
+            <span class="demo-slider-value" id="demoSliderVal">0.0 psi</span>
+        </div>
+    </div>
+
+
+    <script>
+        const blocks = {
+            pressure_header: {
+                title: 'Pressure Header (J_header)',
+                schematic: 'schematics/Pressure_Header.png',
+                description: 'This terminal is used to connect a differential output sensor.'
+            },
+            analog_front_end: {
+                title: 'Analog Front End',
+                schematic: 'schematics/analog_front_end.png',
+                description: 'The analog front-end (AFE) circuit uses a three-op-amp topology built with our zero-drift MCP6V14 operational amplifiers. The circuit provides a gain of 420 and conditions the differential pressure-sensor signal, which ranges from -0.2 mV to 7 mV. After amplification and offset adjustment, the output signal is scaled to a 0 V to 3 V range. The offset is generated by the microcontroller\'s DAC and is set to 270 mV.'
+            },
+            microcontroller: {
+                title: 'Microcontroller',
+                schematic: 'schematics/microcontroller.png',
+                description: '<p>The demo is controlled by the PIC18F26Q71, an 8-bit microcontroller that integrates the key peripherals required for signal acquisition, offset generation, user interaction, display control, and communication with external devices.</p><p>For this project, the following PIC18F26Q71 peripherals are used:</p><ul><li><strong>Analog-to-Digital Converter (ADC)</strong> — The integrated 12-bit ADC is used to read the amplified analog signal from the analog front-end amplifier.</li><li><strong>Digital-to-Analog Converter (DAC)</strong> — The integrated 10-bit DAC generates a 270 mV offset for the differential signal coming from the pressure sensor.</li><li><strong>Serial Peripheral Interface (SPI)</strong> — The SPI interface is used to communicate with the external devices in the system, including: Loop driver DAC, Loop driver digital potentiometer, and Sharp display.</li><li><strong>General-Purpose Input/Output (GPIO)</strong> — GPIO pins are used to interface with the onboard joystick, which enables menu navigation on the display. GPIOs are also used for debugging purposes.</li></ul><p>The MCU can be programmed and debugged using a PICkit™ 5 debugger through the onboard ICSP™ header.</p>'
+            },
+            display_breakout: {
+                title: 'Display Breakout',
+                schematic: 'schematics/display_breakout.png',
+                description: ''
+            },
+            loop_driver: {
+                title: '4-20mA Loop Driver',
+                schematic: 'schematics/Loop_Driver.png',
+                description: 'The demo uses Microchip\'s DAC-based 4–20 mA current loop reference design to convert a sensor measurement, such as pressure, into a standard industrial current signal. An MCU sends the processed value to a 12-bit DAC, whose 0–2.5 V output is converted into a proportional 4–20 mA loop current. The design includes offset trimming, a precision voltage reference, and loop-powered circuitry for accurate two-wire industrial transmission.<br><br><img src="assets/2wire.png" alt="2-Wire Loop" style="max-width:100%;border-radius:6px;border:1px solid #ddd;">'
+            },
+            power: {
+                title: 'Power',
+                schematic: 'schematics/Power.png',
+                description: 'The board provides flexible power-input options for the demo. It can be powered either from a 24V wall power adapter through the onboard power jack or from a bench power supply through the terminal-block connector. A power-selection jumper is included to allow the user to choose the desired input source before operating the board.'
+            },
+            joystick: {
+                title: 'Joystick',
+                schematic: 'schematics/Joystick.png',
+                description: 'The joystick is used to navigate through the display menu.'
+            },
+            pac1711: {
+                title: 'PAC1711 Power Monitor Click MIKROE',
+                schematic: 'schematics/PAC1711.png',
+                description: 'The PAC1711 is the current-measuring device in the system. It measures the 4–20 mA signal coming from the industrial transmitter. It then sends the measured value to the PIC18F57Q43 through the I²C communication bus. In simple terms, the PAC1711 acts as the system\'s current sensor.'
+            },
+            curiosity_nano: {
+                title: 'Curiosity Nano (PIC18F57Q43)',
+                schematic: 'schematics/mcu_q43.png',
+                description: 'The PIC18F57Q43 is the microcontroller in the receiver side of the application. It regularly reads the current measurement from the PAC1711, approximately every 500 ms, and sends the result to the computer through UART over USB. The computer\'s GUI then uses this current value to calculate and display the corresponding pressure.'
+            }
+        };
+
+        const popup = document.getElementById('schematicPopup');
+        const backdrop = document.getElementById('backdrop');
+        const popupTitle = document.getElementById('popupTitle');
+        const popupBody = document.getElementById('popupBody');
+        const popupClose = document.getElementById('popupClose');
+        const popupOpenTab = document.getElementById('popupOpenTab');
+
+        let currentSchematicSrc = '';
+
+        function openPopup(blockKey) {
+            const block = blocks[blockKey];
+            if (!block) return;
+
+            currentSchematicSrc = block.schematic;
+            popupTitle.textContent = block.title;
+
+            const descHtml = block.description
+                ? `<div class="popup-description">${block.description}</div>`
+                : '';
+
+            const img = new Image();
+            img.src = block.schematic;
+            img.onload = function () {
+                popupBody.innerHTML = '';
+                popupBody.appendChild(img);
+                if (descHtml) {
+                    popupBody.insertAdjacentHTML('beforeend', descHtml);
+                }
+            };
+            img.onerror = function () {
+                popupBody.innerHTML = `
+                    <div class="placeholder">
+                        <strong>📋 ${block.title} Schematic</strong>
+                        <p>Place your schematic image at:<br><code>${block.schematic}</code></p>
+                    </div>
+                    ${descHtml}
+                `;
+            };
+
+            popup.classList.add('active');
+            backdrop.classList.add('active');
+        }
+
+        function closePopup() {
+            popup.classList.remove('active');
+            backdrop.classList.remove('active');
+        }
+
+        document.querySelectorAll('.hover-region').forEach(region => {
+            region.addEventListener('click', () => {
+                openPopup(region.dataset.block);
+            });
+        });
+
+        popupOpenTab.addEventListener('click', () => {
+            if (currentSchematicSrc) {
+                window.open(currentSchematicSrc, '_blank');
+            }
+        });
+
+        document.getElementById('applicationsBtn').addEventListener('click', () => {
+            currentSchematicSrc = 'assets/Applications.png';
+            popupTitle.textContent = '4-20mA Applications';
+            const img = new Image();
+            img.src = 'assets/Applications.png';
+            img.onload = function () {
+                popupBody.innerHTML = '';
+                popupBody.appendChild(img);
+            };
+            popup.classList.add('active');
+            backdrop.classList.add('active');
+        });
+
+        document.getElementById('whatIs420Btn').addEventListener('click', () => {
+            const content = `<!DOCTYPE html>
+<html><head><title>What is 4-20mA?</title>
+<style>body{font-family:'Segoe UI',sans-serif;max-width:800px;margin:40px auto;padding:20px;line-height:1.8;color:#333;}
+h1{color:#1a1a2e;border-bottom:2px solid #8b0000;padding-bottom:10px;}
+p{margin-bottom:16px;}
+.example{background:#f5f5f5;padding:16px;border-radius:8px;border-left:4px solid #8b0000;font-family:monospace;}</style></head>
+<body><h1>What is 4-20mA?</h1>
+<p>A 4-20 mA current loop is a widely used industrial signaling method for transmitting measurement data from a sensor or transmitter to a controller, receiver, PLC, or display. Instead of sending the measurement as a voltage signal, the system represents the measured process variable as a controlled current between 4 mA and 20 mA. This approach is commonly used for process variables such as pressure, temperature, flow, and level because it provides high accuracy, low complexity, and reliable transmission over long cable distances.</p>
+<p>In a typical 4-20 mA system, the loop includes a sensor, a transmitter, a receiver, a power supply, and the loop wiring. The sensor measures the physical variable, while the transmitter converts that measurement into a proportional loop current. The receiver then measures the current and converts it back into the corresponding engineering value.</p>
+<p>The reason the signal starts at 4 mA instead of 0 mA is that 4 mA represents the minimum valid measurement, also called the live zero. For example, in a pressure measurement system, 4 mA may represent 0% pressure, while 20 mA represents 100% pressure. Any value between 4 mA and 20 mA represents a proportional measurement within that range. Using 4 mA as the minimum also allows the system to detect fault conditions, such as a broken wire or loss of power, because a current near 0 mA would indicate an abnormal condition rather than a valid zero measurement.</p>
+<p><strong>For example:</strong></p>
+<div class="example">4 mA = minimum measurement, or 0% of full scale<br>12 mA = mid-scale measurement, or 50% of full scale<br>20 mA = maximum measurement, or 100% of full scale</div>
+<h2 style="margin-top:30px;">Applications</h2>
+<img src="assets/Applications.png" alt="4-20mA Applications" style="max-width:100%;border-radius:8px;border:1px solid #ddd;margin:16px 0;">
+<h2 style="margin-top:30px;">Video Tutorial</h2>
+<iframe width="560" height="315" src="https://www.youtube.com/embed/pERR-3BKk2U" frameborder="0" allowfullscreen style="border-radius:8px;margin:16px 0;"></iframe>
+</body></html>`;
+            const newTab = window.open('', '_blank');
+            newTab.document.write(content);
+            newTab.document.close();
+        });
+
+        // Sidebar toggle
+        document.getElementById('sidebarToggle').addEventListener('click', () => {
+            document.getElementById('sidebar').classList.toggle('open');
+        });
+
+        // Pop Quiz
+        document.getElementById('popQuizBtn').addEventListener('click', () => {
+            const quizContent = `<!DOCTYPE html>
+<html><head><title>4-20 mA Pop Quiz</title>
+<style>
+body{font-family:'Segoe UI',sans-serif;max-width:800px;margin:40px auto;padding:20px;line-height:1.8;color:#333;}
+h1{color:#1a1a2e;border-bottom:2px solid #0055a5;padding-bottom:10px;}
+.question{background:#f8f9fa;padding:16px 20px;border-radius:8px;margin:20px 0;border-left:4px solid #0055a5;transition:border-color 0.3s;}
+.question.correct{border-left-color:#2e7d32;background:#e8f5e9;}
+.question.incorrect{border-left-color:#c62828;background:#ffebee;}
+.question h3{margin:0 0 12px 0;color:#1a1a2e;}
+.question label{display:block;margin:6px 0;padding:6px 10px;border-radius:4px;cursor:pointer;}
+.question label:hover{background:rgba(0,85,165,0.05);}
+.question input[type=radio]{margin-right:10px;}
+.feedback{margin-top:8px;font-weight:600;display:none;}
+.feedback.correct{color:#2e7d32;}
+.feedback.incorrect{color:#c62828;}
+#submitBtn{background:#0055a5;color:#fff;border:none;padding:14px 30px;border-radius:6px;font-size:16px;font-weight:600;cursor:pointer;margin-top:25px;display:block;}
+#submitBtn:hover{background:#003d7a;}
+#result{margin-top:20px;padding:20px;border-radius:8px;font-size:18px;font-weight:600;display:none;text-align:center;}
+#result.pass{background:#e8f5e9;color:#2e7d32;border:2px solid #2e7d32;}
+#result.fail{background:#ffebee;color:#c62828;border:2px solid #c62828;}
+</style></head>
+<body>
+<h1>4-20 mA Current Loop Topology — Pop Quiz</h1>
+
+<div class="question" id="q1">
+<h3>1. What does a 4-20 mA current loop transmit?</h3>
+<label><input type="radio" name="q1" value="A">A. A digital communication packet</label>
+<label><input type="radio" name="q1" value="B">B. A controlled current that represents a process variable</label>
+<label><input type="radio" name="q1" value="C">C. A fixed 24V signal</label>
+<label><input type="radio" name="q1" value="D">D. A PWM signal</label>
+<p class="feedback" id="fb1"></p>
+</div>
+
+<div class="question" id="q2">
+<h3>2. In a typical 4-20 mA system, what does 4 mA usually represent?</h3>
+<label><input type="radio" name="q2" value="A">A. Maximum measurement value</label>
+<label><input type="radio" name="q2" value="B">B. Minimum valid measurement value</label>
+<label><input type="radio" name="q2" value="C">C. A short circuit</label>
+<label><input type="radio" name="q2" value="D">D. Power supply voltage</label>
+<p class="feedback" id="fb2"></p>
+</div>
+
+<div class="question" id="q3">
+<h3>3. True or False: In a 4-20 mA current loop, the measured process variable can be represented by current instead of voltage.</h3>
+<label><input type="radio" name="q3" value="A">A. True</label>
+<label><input type="radio" name="q3" value="B">B. False</label>
+<p class="feedback" id="fb3"></p>
+</div>
+
+<div class="question" id="q4">
+<h3>4. Why is 4 mA used instead of 0 mA as the minimum signal level?</h3>
+<label><input type="radio" name="q4" value="A">A. To reduce the power supply voltage</label>
+<label><input type="radio" name="q4" value="B">B. To represent a valid minimum measurement and help detect faults such as a broken wire</label>
+<label><input type="radio" name="q4" value="C">C. To make the signal digital</label>
+<label><input type="radio" name="q4" value="D">D. To eliminate the need for a receiver</label>
+<p class="feedback" id="fb4"></p>
+</div>
+
+<div class="question" id="q5">
+<h3>5. In a 4-20 mA current loop, what does 20 mA typically represent?</h3>
+<label><input type="radio" name="q5" value="A">A. The minimum process measurement</label>
+<label><input type="radio" name="q5" value="B">B. A disconnected sensor</label>
+<label><input type="radio" name="q5" value="C">C. The maximum process measurement</label>
+<label><input type="radio" name="q5" value="D">D. The power supply current limit</label>
+<p class="feedback" id="fb5"></p>
+</div>
+
+<button id="submitBtn" onclick="checkAnswers()">Submit Answers</button>
+<div id="result"></div>
+
+<script>
+function checkAnswers() {
+    const answers = {
+        q1: {correct: 'B', explanation: 'A 4-20 mA loop transmits process-variable information as a current signal.'},
+        q2: {correct: 'B', explanation: '4 mA represents the low end of the valid measurement range.'},
+        q3: {correct: 'A', explanation: 'True — current loops use current instead of voltage to represent measurements.'},
+        q4: {correct: 'B', explanation: '4 mA represents the minimum valid measurement, often called a "live zero," and helps distinguish a valid zero reading from a fault condition such as a broken wire or loss of power.'},
+        q5: {correct: 'C', explanation: '20 mA typically represents the maximum process measurement, or 100% of the configured measurement range.'}
+    };
+    let score = 0;
+    for (let i = 1; i <= 5; i++) {
+        const selected = document.querySelector('input[name=q'+i+']:checked');
+        const qDiv = document.getElementById('q'+i);
+        const fb = document.getElementById('fb'+i);
+        const key = 'q'+i;
+        if (selected && selected.value === answers[key].correct) {
+            score++;
+            qDiv.className = 'question correct';
+            fb.className = 'feedback correct';
+            fb.textContent = '\\u2713 Correct! ' + answers[key].explanation;
+        } else {
+            qDiv.className = 'question incorrect';
+            fb.className = 'feedback incorrect';
+            fb.textContent = '\\u2717 Incorrect. Answer: ' + answers[key].correct + ' — ' + answers[key].explanation;
+        }
+        fb.style.display = 'block';
+    }
+    const result = document.getElementById('result');
+    result.style.display = 'block';
+    result.textContent = 'Score: ' + score + ' / 5' + (score === 5 ? ' — Perfect!' : score >= 3 ? ' — Good job!' : ' — Keep studying!');
+    result.className = score >= 3 ? 'pass' : 'fail';
+    document.getElementById('submitBtn').style.display = 'none';
+}
+<\/script>
+</body></html>`;
+            const quizTab = window.open('', '_blank');
+            quizTab.document.write(quizContent);
+            quizTab.document.close();
+        });
+
+        popupClose.addEventListener('click', closePopup);
+        backdrop.addEventListener('click', closePopup);
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closePopup();
+        });
+
+        // ========== LCD ==========
+        const lcdText = document.getElementById('lcdText');
+
+        // ========== DEMO MODE (always on) ==========
+        const demoSlider = document.getElementById('demoSlider');
+        const demoSliderVal = document.getElementById('demoSliderVal');
+        const demoTankVal = document.getElementById('demoTankVal');
+        const demoSensorVal = document.getElementById('demoSensorVal');
+        const demoBoardVal = document.getElementById('demoBoardVal');
+        const demoOutputVal = document.getElementById('demoOutputVal');
+
+        function updateDemoValues(psi) {
+            // Sensor output: 0 psi → -0.2 mV, 50 psi → 7 mV (linear)
+            const sensorMv = -0.2 + (psi / 50) * 7.2;
+
+            // AFE: gain of 420, offset 270 mV
+            const conditionedV = Math.min(3.0, Math.max(0, (sensorMv * 0.001 * 420) + 0.270));
+
+            // Loop current: 0 psi → 4 mA, 50 psi → 20 mA (linear)
+            const loopMa = 4 + (psi / 50) * 16;
+
+            demoTankVal.textContent = psi.toFixed(1);
+            demoSensorVal.textContent = sensorMv.toFixed(2);
+            demoBoardVal.textContent = conditionedV.toFixed(3);
+            demoOutputVal.textContent = loopMa.toFixed(2);
+            demoSliderVal.textContent = psi.toFixed(1) + ' psi';
+
+            // Sync LCD
+            const progress = (psi / 50) * 100;
+            const noise = (Math.random() - 0.5) * 0.05;
+            lcdText.innerHTML = `Pressure = ${(psi + noise * 2).toFixed(2)} psi<br>Loop Current = ${(loopMa + noise).toFixed(2)} mA`;
+        }
+
+        demoSlider.addEventListener('input', () => {
+            updateDemoValues(parseFloat(demoSlider.value));
+        });
+
+        // Initialize with slider at 0
+        updateDemoValues(0);
+
+        // ========== VIEW NAVIGATION ==========
+        const boardContainer = document.getElementById('boardContainer');
+        const demoPanel = document.getElementById('demoPanel');
+        const txInstructions = document.getElementById('txInstructions');
+        const receiverView = document.getElementById('receiverView');
+        const rxSignalChain = document.getElementById('rxSignalChain');
+        const pageTitle = document.querySelector('.title-bar h1');
+        const toRxBtn = document.getElementById('toRxBtn');
+        const toTxBtn = document.getElementById('toTxBtn');
+        const rxInstructions = document.getElementById('rxInstructions');
+        const wiresContainer = document.getElementById('wiresContainer');
+        const rxWiresContainer = document.getElementById('rxWiresContainer');
+
+        function switchToTx() {
+            boardContainer.style.opacity = '1';
+            boardContainer.style.pointerEvents = 'auto';
+            demoPanel.style.opacity = '1';
+            demoPanel.style.pointerEvents = 'auto';
+            txInstructions.style.opacity = '1';
+            receiverView.classList.remove('active');
+            rxSignalChain.classList.remove('active');
+            pageTitle.textContent = 'EV92J35A - Differential Signal Conditioning and 4-20 mA Loop Controller Board';
+            document.body.style.background = '#1a1a2e';
+            document.getElementById('sidebar').classList.remove('open');
+            toRxBtn.style.display = 'flex';
+            rxInstructions.style.opacity = '0';
+            wiresContainer.style.opacity = '1';
+            rxWiresContainer.classList.remove('active');
+        }
+
+        function switchToRx() {
+            boardContainer.style.opacity = '0';
+            boardContainer.style.pointerEvents = 'none';
+            demoPanel.style.opacity = '0';
+            demoPanel.style.pointerEvents = 'none';
+            txInstructions.style.opacity = '0';
+            receiverView.classList.add('active');
+            rxSignalChain.classList.add('active');
+            pageTitle.textContent = 'PAC1711 Power and Current Monitor';
+            document.body.style.background = '#0a2e1a';
+            document.getElementById('sidebar').classList.add('open');
+            toRxBtn.style.display = 'none';
+            rxInstructions.style.opacity = '1';
+            wiresContainer.style.opacity = '0';
+            rxWiresContainer.classList.add('active');
+        }
+    </script>
+</body>
+</html>

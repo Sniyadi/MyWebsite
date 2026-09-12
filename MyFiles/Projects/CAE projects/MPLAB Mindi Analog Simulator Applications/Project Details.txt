@@ -1,0 +1,1 @@
+Contributed to the "Mindi™ Analog Simulator Applications" course for Microchip University by rebranding the title to increase its appeal and reach. Additionally, I enhanced the curriculum by developing and integrating three key educational video modules: "Analysis Techniques," "Output Impedance," and "Importing Analog Signals into Simulation."

@@ -1,0 +1,3 @@
+Layer Pairs Export File for PCB: C:\Pressure_Sensor_Board_v3.2\MASTERs26_PCB.PcbDoc
+LayersSetName=Top_Bot_Thru_Holes|DrillFile=masters26_pcb-roundholes.txt|DrillLayers=gtl,g1,g2,gbl
+LayersSetName=Top_Bot_Slot_Holes|DrillFile=masters26_pcb-slotholes.txt|DrillLayers=gtl,g1,g2,gbl

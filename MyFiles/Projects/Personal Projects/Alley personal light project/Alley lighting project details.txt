@@ -1,0 +1,11 @@
+This interactive lighting project transforms a standard dark alleyway into a responsive, illuminated path using an Arduino-based sequential lighting system. Instead of abruptly blinding someone with a standard floodlight, the system creates a cascading "follow" effect that guides a person down the alley as they walk.
+
+The Mechanics
+
+Detection: A PIR (Passive Infrared) motion sensor placed at the entrance of the alley detects the heat signature and movement of an approaching person.
+
+Processing: The sensor sends a signal to the Arduino microcontroller, which acts as the brain of the operation.
+
+Execution: The Arduino runs a custom script that triggers the string of light bulbs to turn on sequentially. This creates a directional wave of light that scales up the alleyway.
+
+Reset: Once the person has passed and a set timer expires with no new movement, the lights systematically shut off to conserve energy.

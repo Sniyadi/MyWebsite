@@ -1,0 +1,8 @@
+
+18F26Q71 Memory Summary:
+    Program space        used  C8EEh ( 51438) of 10000h bytes   ( 78.5%)
+    Data space           used   3A1h (   929) of  1000h bytes   ( 22.7%)
+    Configuration bits   used     5h (     5) of     6h words   ( 83.3%)
+    EEPROM space         used     0h (     0) of   100h bytes   (  0.0%)
+    ID Location space    used     0h (     0) of    40h bytes   (  0.0%)
+

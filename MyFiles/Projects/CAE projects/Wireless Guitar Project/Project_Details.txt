@@ -1,0 +1,9 @@
+As the analog lead for the wireless guitar project, your core responsibility was designing the Analog Front End (AFE) to bridge the gap between the raw physics of a guitar pickup and the strict input requirements of a digital system.
+
+Here is a technical breakdown of your contribution to the signal chain:
+
+DC Offset & Biasing: Electric guitar pickups generate an AC signal that swings both positive and negative around zero volts. Because ADCs typically operate on a single positive voltage supply (e.g., 0 to 3.3V), feeding the raw signal directly would clip the negative half of the audio waveform. By applying a DC offset, you shifted the entire AC signal up to the midpoint of the ADC's voltage range, preserving the full dynamic swing of the instrument without distortion.
+
+Low-Pass Filtering (Anti-Aliasing): Before digitization, the signal requires strict bandwidth limiting. Your low-pass filter acted as an anti-aliasing filter, stripping out high-frequency noise, electromagnetic interference, and upper harmonics that exceed the ADC's Nyquist frequency. Without this analog stage, those high-frequency artifacts would "fold back" into the audible spectrum during sampling, introducing harsh digital noise.
+
+ADC Integration & Digital Handoff: Once the analog signal was properly scaled, centered, and bandwidth-limited, it was fed into the ADC. This stage sampled the conditioned analog voltage and converted it into a digital bitstream, acting as the exact boundary line between your analog domain and the system's digital Bluetooth transmission.

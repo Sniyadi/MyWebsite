@@ -1,0 +1,11 @@
+Situation:
+When I joined the CAE Knowledge Base team, overall article production was lower than expected. The team relied on a cumbersome Excel spreadsheet to track topics and daily tasks, which was prone to copy-paste errors and made it difficult for everyone to stay on the same page.
+
+Task:
+We needed a more reliable, streamlined way to track support tickets and article drafts without the administrative friction of maintaining external spreadsheets.
+
+Action:
+I partnered with a teammate to transition our entire tracking process directly into Salesforce, which made sense since it was already the platform where articles were published. Together, we built a dynamic dashboard designed to automatically filter data based on the logged-in user. Whenever a team member opened it, they instantly saw a customized view of exactly how many tickets they needed to review and which articles they were assigned to write.
+
+Result:
+By removing the manual tracking steps and centralizing the workflow, the team could focus entirely on content generation. As a result, our article creation numbers increased significantly, and management was highly satisfied with the boost in overall team efficiency.

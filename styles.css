@@ -1520,3 +1520,75 @@ a:hover {
 [data-theme="light"] .nav-brand-chip {
   color: #ffffff;
 }
+/* Theme Switch */
+.theme-switch {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  margin-left: 8px;
+  display: flex;
+  align-items: center;
+  outline: none;
+}
+
+.theme-switch-track {
+  position: relative;
+  width: 54px;
+  height: 28px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border-medium);
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 6px;
+  transition: var(--transition-smooth);
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.theme-switch:hover .theme-switch-track {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+[data-theme="light"] .theme-switch-track {
+  background: rgba(0, 0, 0, 0.05);
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+}
+
+[data-theme="light"] .theme-switch:hover .theme-switch-track {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.theme-switch-puck {
+  position: absolute;
+  top: 3px;
+  left: 4px;
+  width: 20px;
+  height: 20px;
+  background: var(--text-primary);
+  border-radius: 50%;
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 1;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+}
+
+[data-theme="light"] .theme-switch-puck {
+  transform: translateX(24px);
+}
+
+.switch-icon {
+  width: 14px;
+  height: 14px;
+  z-index: 2;
+  color: var(--text-muted);
+  transition: color 0.3s ease;
+}
+
+[data-theme="dark"] .moon-icon {
+  color: var(--bg-primary);
+}
+
+[data-theme="light"] .sun-icon {
+  color: var(--bg-primary);
+}

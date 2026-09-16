@@ -124,6 +124,36 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Carousel slide function
+  // Theme Toggle Logic
+  const themeToggleBtn = document.getElementById('themeToggleBtn');
+  const moonIcon = document.querySelector('.moon-icon');
+  const sunIcon = document.querySelector('.sun-icon');
+  
+  if (themeToggleBtn) {
+    // Initial icon state
+    const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+    if (currentTheme === 'light') {
+      moonIcon.style.display = 'none';
+      sunIcon.style.display = 'block';
+    }
+    
+    themeToggleBtn.addEventListener('click', () => {
+      const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+      const newTheme = isLight ? 'dark' : 'light';
+      
+      document.documentElement.setAttribute('data-theme', newTheme);
+      localStorage.setItem('theme', newTheme);
+      
+      if (newTheme === 'light') {
+        moonIcon.style.display = 'none';
+        sunIcon.style.display = 'block';
+      } else {
+        moonIcon.style.display = 'block';
+        sunIcon.style.display = 'none';
+      }
+    });
+  }
+
 window.moveSlide = function(direction, button) {
   const container = button.closest('.carousel-container');
   const slides = container.querySelectorAll('.carousel-slide');

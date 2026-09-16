@@ -200,7 +200,7 @@ a:hover {
   position: sticky;
   top: 0;
   width: 100%;
-  background: rgba(8, 11, 17, 0.85);
+  background: var(--bg-glass);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border-bottom: 1px solid var(--border-subtle);

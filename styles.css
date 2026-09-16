@@ -1515,7 +1515,7 @@ a:hover {
 
 [data-theme="light"] .btn-secondary:hover {
   background: var(--accent-blue-glow);
-  color: var(--text-primary);
+  color: #0f172a !important;
 }
 
 [data-theme="light"] .nav-brand-chip {

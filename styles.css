@@ -64,7 +64,7 @@
   --accent-blue: #2563eb;
   --accent-blue-glow: rgba(37, 99, 235, 0.15);
   --accent-emerald: #059669;
-  --accent-amber: #d97706;
+  --accent-amber: #b45309;
   --accent-indigo: #4f46e5;
 
   --text-primary: #0f172a;
@@ -1503,4 +1503,20 @@ a:hover {
   .contact-wrapper {
     padding: 32px 20px;
   }
+}
+
+[data-theme="light"] .contact-wrapper {
+  background: var(--bg-card);
+}
+
+[data-theme="light"] .btn-secondary {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="light"] .btn-secondary:hover {
+  background: var(--accent-blue-glow);
+}
+
+[data-theme="light"] .nav-brand-chip {
+  color: #ffffff;
 }
